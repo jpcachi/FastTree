@@ -1016,6 +1016,7 @@ namespace FastTreeNS
             var i = Math.Max(0, PointToIndex(new Point(Padding.Left, Padding.Top)) - 1);
 
             visibleItemInfos.Clear();
+            int horizontalScrollNeeded = 0;
 
             for (; i < ItemCount; i++)
             {
@@ -1023,8 +1024,18 @@ namespace FastTreeNS
                 if (info.Y > ClientSize.Height)
                     break;
 
+                if(info.TextRect.Right > ClientRectangle.Width)
+                {
+                    int difference = info.TextRect.Right;
+
+                    if (difference > horizontalScrollNeeded)
+                        horizontalScrollNeeded = difference;
+                }
+
                 DrawItem(gr, info);
             }
+
+            AutoScrollMinSize = new Size(horizontalScrollNeeded, AutoScrollMinSize.Height);
         }
 
         protected readonly Dictionary<int, VisibleItemInfo> visibleItemInfos = new Dictionary<int, VisibleItemInfo>();
@@ -1054,7 +1065,7 @@ namespace FastTreeNS
         protected virtual void DrawItemHotTracking(Graphics gr, VisibleItemInfo info)
         {
             var c1 = HotTrackingColor;
-            var rect = info.TextAndIconRect;
+            var rect = new Rectangle(info.TextAndIconRect.X - HorizontalScroll.Value, info.TextAndIconRect.Y, info.TextAndIconRect.Width, info.TextAndIconRect.Height);
 
             if (FullItemSelect)
             {
@@ -1083,7 +1094,7 @@ namespace FastTreeNS
         {
             var c1 = Color.FromArgb(SelectionColor.A == 255 ? SelectionColorOpaque : SelectionColor.A, SelectionColor);
             var c2 = Color.FromArgb(c1.A / 2, SelectionColor);
-            var rect = info.TextAndIconRect;
+            var rect = new Rectangle(info.TextAndIconRect.X - HorizontalScroll.Value, info.TextAndIconRect.Y, info.TextAndIconRect.Width, info.TextAndIconRect.Height);
 
             if (FullItemSelect)
             {
@@ -1111,7 +1122,7 @@ namespace FastTreeNS
                 if (img != null)
                 {
                     img.SetResolution(gr.DpiX, gr.DpiY);
-                    gr.DrawImage(img, info.X_ExpandBox, info.Y + 1);
+                    gr.DrawImage(img, info.X_ExpandBox - HorizontalScroll.Value, info.Y + 1);
                 }
             }
 
@@ -1121,7 +1132,7 @@ namespace FastTreeNS
                 if (img != null)
                 {
                     img.SetResolution(gr.DpiX, gr.DpiY);
-                    gr.DrawImage(img, info.X_CheckBox, info.Y + 1);
+                    gr.DrawImage(img, info.X_CheckBox - HorizontalScroll.Value, info.Y + 1);
                 }
             }
 
@@ -1131,19 +1142,21 @@ namespace FastTreeNS
                 if (img != null)
                 {
                     img.SetResolution(gr.DpiX, gr.DpiY);
-                    gr.DrawImage(img, info.X_Icon, info.Y + 1);
+                    gr.DrawImage(img, info.X_Icon - HorizontalScroll.Value, info.Y + 1);
                 }
             }
         }
 
         public virtual void DrawItemContent(Graphics gr, VisibleItemInfo info)
         {
-            using(var sf  = new StringFormat() { LineAlignment = info.LineAlignment })
+            using (var sf = new StringFormat() { LineAlignment = info.LineAlignment })
             using (var brush = new SolidBrush(info.ForeColor))
             {
                 var rect = new Rectangle(info.X_Text, info.Y + 1, info.X_EndText - info.X_Text + 1, info.Height - 1);
                 //gr.DrawString(info.Text, Font, brush, info.X_Text, info.Y + 1, sf);
-                gr.DrawString(info.Text, Font, brush, rect, sf);
+                //gr.DrawString(info.Text, Font, brush, rect, sf);
+                Point textLocation = new Point(info.TextLocation.X - HorizontalScroll.Value, info.TextLocation.Y);
+                TextRenderer.DrawText(gr, info.Text, Font, textLocation, info.ForeColor);
             }
         }
 
@@ -1153,7 +1166,7 @@ namespace FastTreeNS
 
             if (backColor != Color.Empty)
                 using (var brush = new SolidBrush(backColor))
-                    gr.FillRectangle(brush, info.TextAndIconRect);
+                    gr.FillRectangle(brush, new Rectangle(info.TextRect.X - HorizontalScroll.Value, info.TextRect.Y, info.TextRect.Width, info.TextRect.Height));
         }
 
         protected virtual VisibleItemInfo CalcVisibleItemInfo(Graphics gr, int itemIndex)
@@ -1315,6 +1328,10 @@ namespace FastTreeNS
             {
                 get { return new Rectangle(X_Text, Y, X_EndText - X_Text + 1, Height); }
             }
+            public Point TextLocation
+            {
+                get { return new Point(X_Text, Y + 2); }
+            }
 
             public virtual void Calc(FastListBase list, int itemIndex, Graphics gr)
             {
@@ -1344,9 +1361,9 @@ namespace FastTreeNS
                 X_Icon = x;
                 if (list.ShowIcons) x += list.IconSize.Width + 2;
                 X_Text = x;
-                x += (int)gr.MeasureString(Text, list.Font).Width + 1;
+                x += (int)TextRenderer.MeasureText(Text, list.Font).Width;
                 X_End = list.ClientSize.Width - list.Padding.Right - 2;
-                X_EndText = Math.Min(x, X_End);
+                X_EndText = x;
             }
         }
 
@@ -1607,7 +1624,7 @@ namespace FastTreeNS
                 h += rect.Left - Padding.Left;
             //
             v = Math.Max(VerticalScroll.Minimum, v);
-            h = Math.Max(HorizontalScroll.Minimum, h);
+            _ = Math.Max(HorizontalScroll.Minimum, h);
             //
             try
             {
