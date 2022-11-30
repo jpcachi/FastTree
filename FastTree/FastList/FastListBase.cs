@@ -439,7 +439,7 @@ namespace FastTreeNS
             if (item == null)
                 return;
 
-            if (e.Button == MouseButtons.Left && item.X_Text <= e.Location.X)
+            if (e.Button == MouseButtons.Left && item.X_Text - HorizontalScroll.Value <= e.Location.X)
                 if (SelectedItemIndexes.Count == 1 && SelectedItemIndexes.Contains(item.ItemIndex))
                     if (!Readonly && CanEditItem(item.ItemIndex))
                     {
@@ -447,14 +447,14 @@ namespace FastTreeNS
                     }
 
             if (AllowSelectItems)
-                if (e.Button == MouseButtons.Left && item.X_Icon <= e.Location.X)
+                if (e.Button == MouseButtons.Left && item.X_Icon - HorizontalScroll.Value <= e.Location.X)
                 {
                     //Select
                     if (MultiSelect)
                     {
                         startMouseSelectArea = e.Location;
                         startMouseSelectArea.Offset(HorizontalScroll.Value, VerticalScroll.Value);
-                        mouseCanSelectArea = item.X_EndText < e.Location.X || !AllowDragItems;
+                        mouseCanSelectArea = item.X_EndText - HorizontalScroll.Value < e.Location.X || !AllowDragItems;
                     }
 
                     if (!AllowDragItems || !MultiSelect)
@@ -463,7 +463,7 @@ namespace FastTreeNS
 
             if (ShowCheckBoxes && e.Button == MouseButtons.Left)
             {
-                if ((item.X_CheckBox <= e.Location.X && item.X_Icon > e.Location.X) || (!AllowSelectItems))
+                if ((item.X_CheckBox <= e.Location.X && item.X_Icon - HorizontalScroll.Value > e.Location.X) || (!AllowSelectItems))
                 {
                     //Checkbox
                     OnCheckboxClick(item);
@@ -472,7 +472,7 @@ namespace FastTreeNS
             }
 
             if (ShowExpandBoxes)
-                if (e.Button == MouseButtons.Left && item.X_ExpandBox <= e.Location.X && item.X_CheckBox > e.Location.X)
+                if (e.Button == MouseButtons.Left && item.X_ExpandBox - HorizontalScroll.Value <= e.Location.X && item.X_CheckBox - HorizontalScroll.Value > e.Location.X)
                 {
                     //Expand
                     OnExpandBoxClick(item);
@@ -486,7 +486,7 @@ namespace FastTreeNS
             {
                 startMouseSelectArea = e.Location;
                 startMouseSelectArea.Offset(HorizontalScroll.Value, VerticalScroll.Value);
-                mouseCanSelectArea = item.X_EndText < e.Location.X || !AllowDragItems;
+                mouseCanSelectArea = item.X_EndText < e.Location.X - HorizontalScroll.Value || !AllowDragItems;
 
                 if (Control.ModifierKeys == Keys.Control)
                 {
