@@ -206,7 +206,7 @@ namespace FastTreeNS
 
         protected override bool CanCollapseItem(int itemIndex)
         {
-            return GetBoolNodeProperty(itemIndex, CanCollapseNodeNeeded, true);
+            return GetBoolNodeProperty(itemIndex, CanCollapseNodeNeeded, hasChildren[itemIndex]);
         }
 
         protected override bool CanEditItem(int itemIndex)
